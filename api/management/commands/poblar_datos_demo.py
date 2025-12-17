@@ -28,7 +28,8 @@ class Command(BaseCommand):
         random.seed(999)
 
     def handle(self, *args, **kwargs):
-        self.stdout.write(self.style.WARNING('⚠️  INICIANDO POBLACIÓN DEMO - Borrando datos antiguos...'))
+        self.stdout.write(self.style.WARNING(f'⚠️  INICIANDO POBLACIÓN DEMO - Borrando datos antiguos...'))
+        self.stdout.write(f'🌍 Timezone activo: {timezone.get_current_timezone_name()}')
         
         self.limpiar_datos()
         
@@ -45,7 +46,7 @@ class Command(BaseCommand):
         self.poblar_relleno(unidades, golden_users)
         
         self.stdout.write(self.style.SUCCESS('\n✅ ¡Demo lista! Usuarios creados:'))
-        self.stdout.write('   - Admin:     admin / admin123')
+        self.stdout.write('   - Admin:     admin / admin')
         self.stdout.write('   - Guardia:   guardia / guardia123')
         self.stdout.write('   - Residente: residente / residente123 (Torre A-101)')
         self.stdout.write('   - Moroso:    moroso / residente123 (Torre A-102)')
