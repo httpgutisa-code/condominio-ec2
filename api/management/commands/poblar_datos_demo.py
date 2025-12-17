@@ -153,17 +153,19 @@ class Command(BaseCommand):
             AreaComun.objects.create(nombre="Quincho Panorámico", capacidad_personas=20, costo_reserva=20000),
             AreaComun.objects.create(nombre="Piscina", capacidad_personas=50, costo_reserva=0),
             AreaComun.objects.create(nombre="Sala Multiuso", capacidad_personas=30, costo_reserva=15000),
+            AreaComun.objects.create(nombre="Gimnasio", capacidad_personas=10, costo_reserva=0),
         ]
         
-        # --- Residentes Extra (Relleno) ---
+        # --- Residentes Extra (Relleno para Ocupación) ---
+        # Creamos ~35 residentes para tener buena ocupación (~80% de 40 deptos)
         residentes_extra = []
-        for i in range(15):
+        for i in range(35):
             u_extra = User.objects.create_user(f'vecino{i}', self.fake.email(), 'vecino123')
             u_extra.first_name = self.fake.first_name()
             u_extra.last_name = self.fake.last_name()
             u_extra.save()
             
-            # Unidades desde la 3ra en adelante
+            # Asignar a unidades disponibles (después de las 2 usadas por golden)
             if i + 2 < len(unidades):
                 unidad = unidades[i+2]
                 r = Residente.objects.create(
@@ -177,65 +179,84 @@ class Command(BaseCommand):
 
         todos_residentes = [golden['residente'], golden['moroso']] + residentes_extra
 
-        # --- Finanzas (Historial 6 meses) ---
-        meses = ['Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-        for res in todos_residentes:
-            for i, mes in enumerate(meses):
+        # --- Finanzas (Historial dinámico hasta el mes ACTUAL) ---
+        # Generar datos para los últimos 6 meses incluyendo el actual
+        fecha_actual = timezone.now().date()
+        meses_atras = 5
+        
+        for i in range(meses_atras + 1):
+            fecha_mes = fecha_actual - timedelta(days=30 * (meses_atras - i))
+            nombre_mes = fecha_mes.strftime("%B %Y").capitalize() # Ej: Diciembre 2024
+            
+            for res in todos_residentes:
                 estado = 'pagada'
                 
-                # El Moroso debe los últimos 2 meses
-                if res == golden['moroso'] and i >= 4:
-                    estado = 'vencida'
+                # Reglas para que el gráfico actual tenga "vida"
+                es_mes_actual = (i == meses_atras)
                 
-                # Algunos random deben el último mes
-                if res in residentes_extra and i == 5 and random.random() > 0.8:
-                    estado = 'pendiente'
+                if res == golden['moroso']:
+                    # El moroso debe los últimos 3 meses fijos
+                    if i >= meses_atras - 2:
+                        estado = 'vencida'
+                elif es_mes_actual:
+                    # En el mes actual, el 30% aún no paga (Pendiente)
+                    if random.random() > 0.7:
+                        estado = 'pendiente'
+                else:
+                    # Meses pasados: algunos se olvidaron (Vencida pequeña)
+                    if random.random() > 0.95:
+                        estado = 'vencida'
 
                 c = Cuota.objects.create(
                     residente=res,
                     monto=random.choice([50000, 75000, 100000]),
-                    mes=f"{mes} 2024",
-                    fecha_vencimiento=timezone.now().date().replace(day=5), # Simplificado
+                    mes=nombre_mes,
+                    fecha_vencimiento=fecha_mes.replace(day=5),
                     estado=estado,
-                    descripcion=f"Gastos Comunes {mes}"
+                    descripcion=f"Gastos Comunes {nombre_mes}"
                 )
                 
                 if estado == 'pagada':
                     Pago.objects.create(
                         cuota=c, 
                         monto_pagado=c.monto,
-                        metodo_pago=random.choice(['Transferencia', 'Webpay'])
+                        metodo_pago=random.choice(['Transferencia', 'Webpay', 'Efectivo'])
                     )
 
         # --- Seguridad: Visitas y Alertas ---
         
-        # 1. Visita para HOY (Para probar QR)
+        # 1. Visita para HOY
         Visita.objects.create(
             residente=golden['residente'],
             nombre_visitante="Visita de Prueba",
             documento_visitante="12345678-9",
             fecha_visita=timezone.now().date(),
             hora_entrada_esperada=timezone.now().time(),
-            codigo_qr_acceso=str(uuid.uuid4()) # Un QR válido
+            codigo_qr_acceso=str(uuid.uuid4())
         )
-        
-        # 2. Alertas
-        AlertaSeguridad.objects.create(
-            tipo_alerta='perro_suelto',
-            descripcion="Perro golden retriever sin correa en la piscina",
-            fecha_hora=timezone.now() - timedelta(hours=2),
-            resuelto=False,
-            url_evidencia="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=500&q=60"
-        )
-        
-        AlertaSeguridad.objects.create(
-            tipo_alerta='vehiculo_sospechoso',
-            descripcion="Auto desconocido bloqueando portón",
-            fecha_hora=timezone.now() - timedelta(days=2),
-            resuelto=True,
-            atendido_por=golden['guardia'],
-            notas_resolucion="Era uber esperando pasajero, se retiró."
-        )
+
+        # 2. Alertas (Variedad para el Dashboard)
+        tipos_alertas = ['robo', 'porton_abierto', 'ruidos_molestos', 'vehiculo_sospechoso', 'incendio']
+        for _ in range(8):
+            AlertaSeguridad.objects.create(
+                tipo_alerta=random.choice(tipos_alertas),
+                descripcion=self.fake.sentence(),
+                fecha_hora=timezone.now() - timedelta(hours=random.randint(1, 48)),
+                resuelto=random.choice([True, False]), # Mix para KPI "Alertas Activas"
+                url_evidencia="https://images.unsplash.com/photo-1552053831-71594a27632d?fit=crop&w=500&q=60"
+            )
+
+        # --- Mantenimiento (Tickets) ---
+        estados_ticket = ['abierto', 'en_proceso', 'resuelto', 'cerrado']
+        for _ in range(10):
+            TicketMantenimiento.objects.create(
+                solicitado_por=random.choice(todos_residentes).user,
+                asunto=f"Problema con {random.choice(['Luz', 'Agua', 'Ascensor', 'Portón'])}",
+                descripcion=self.fake.text(),
+                prioridad=random.choice(['alta', 'media', 'baja']),
+                estado=random.choice(estados_ticket), # Mix para KPI "Tickets Pendientes"
+                fecha_creacion=timezone.now() - timedelta(days=random.randint(0, 10))
+            )
 
         # --- Vehículos ---
         VehiculoAutorizado.objects.create(
