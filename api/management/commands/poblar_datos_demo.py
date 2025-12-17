@@ -89,7 +89,7 @@ class Command(BaseCommand):
         users = {}
         
         # 1. ADMIN
-        admin_user = User.objects.create_superuser('admin', 'admin@demo.com', 'admin123')
+        admin_user = User.objects.create_superuser('admin', 'admin@demo.com', 'admin')
         admin_user.first_name = "Administrador"
         admin_user.last_name = "Principal"
         admin_user.save()
