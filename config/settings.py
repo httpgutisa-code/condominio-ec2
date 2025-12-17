@@ -57,7 +57,18 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
-CORS_ALLOW_ALL_ORIGINS = True 
+# CORS_ALLOW_ALL_ORIGINS = True  # Inseguro para producción
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://condominio-admin-two.vercel.app",
+    # NOTA: Las Apps Móviles (Flutter/APK) NO necesitan estar aquí.
+    # Al ser aplicaciones nativas, no tienen la restricción de "Same-Origin" del navegador.
+    # Se conectan directo.
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://condominio-admin-two.vercel.app",
+] 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
