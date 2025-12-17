@@ -17,3 +17,4 @@ uritemplate==4.2.0
 
 gunicorn
 psycopg2-binary
+django-cors-headers
