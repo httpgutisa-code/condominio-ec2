@@ -249,13 +249,14 @@ class Command(BaseCommand):
         # --- Mantenimiento (Tickets) ---
         estados_ticket = ['abierto', 'en_proceso', 'resuelto', 'cerrado']
         for _ in range(10):
+            ticket_residente = random.choice(todos_residentes)
             TicketMantenimiento.objects.create(
-                solicitado_por=random.choice(todos_residentes).user,
-                asunto=f"Problema con {random.choice(['Luz', 'Agua', 'Ascensor', 'Portón'])}",
+                residente=ticket_residente,
+                titulo=f"Problema con {random.choice(['Luz', 'Agua', 'Ascensor', 'Portón'])}",
                 descripcion=self.fake.text(),
                 prioridad=random.choice(['alta', 'media', 'baja']),
-                estado=random.choice(estados_ticket), # Mix para KPI "Tickets Pendientes"
-                fecha_creacion=timezone.now() - timedelta(days=random.randint(0, 10))
+                estado=random.choice(estados_ticket), 
+                # fecha_creacion es auto_now_add, para simular historia deberíamos forzarlo después o aceptarlo como 'now'
             )
 
         # --- Vehículos ---
