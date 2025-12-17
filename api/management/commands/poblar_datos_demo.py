@@ -94,7 +94,7 @@ class Command(BaseCommand):
         admin_user.first_name = "Administrador"
         admin_user.last_name = "Principal"
         admin_user.save()
-        Administrador.objects.create(user=admin_user, telefono="+56912345678")
+        Administrador.objects.create(user=admin_user, telefono=f"7{random.randint(1000000, 9999999)}")
         users['admin'] = admin_user
         
         # 2. GUARDIA
@@ -102,7 +102,7 @@ class Command(BaseCommand):
         guardia_user.first_name = "Juan"
         guardia_user.last_name = "Segura"
         guardia_user.save()
-        seg = Seguridad.objects.create(user=guardia_user, turno="Mañana", telefono="+56987654321")
+        seg = Seguridad.objects.create(user=guardia_user, turno="Mañana", telefono=f"6{random.randint(1000000, 9999999)}")
         users['guardia'] = seg
         
         # 3. TÉCNICO
@@ -110,7 +110,7 @@ class Command(BaseCommand):
         tecnico_user.first_name = "Pedro"
         tecnico_user.last_name = "Reparador"
         tecnico_user.save()
-        mant = PersonalMantenimiento.objects.create(user=tecnico_user, especialidad="Electricidad", telefono="+56911223344")
+        mant = PersonalMantenimiento.objects.create(user=tecnico_user, especialidad="Electricidad", telefono=f"7{random.randint(1000000, 9999999)}")
         users['tecnico'] = mant
         
         # 4. RESIDENTE (Bueno)
@@ -123,7 +123,7 @@ class Command(BaseCommand):
         res = Residente.objects.create(
             user=res_user, 
             unidad_habitacional=unidad_buena,
-            telefono="+56999887766",
+            telefono=f"7{random.randint(1000000, 9999999)}",
             es_propietario=True,
             score_morosidad_ia=98.5
         )
@@ -139,7 +139,7 @@ class Command(BaseCommand):
         moroso = Residente.objects.create(
             user=moroso_user, 
             unidad_habitacional=unidad_mala,
-            telefono="+56944556677",
+            telefono=f"6{random.randint(1000000, 9999999)}",
             es_propietario=True,
             score_morosidad_ia=35.0 # Riesgo alto
         )
@@ -171,7 +171,7 @@ class Command(BaseCommand):
                 r = Residente.objects.create(
                     user=u_extra,
                     unidad_habitacional=unidad,
-                    telefono=self.fake.phone_number(),
+                    telefono=f"{random.choice(['6','7'])}{random.randint(1000000, 9999999)}",
                     es_propietario=random.choice([True, False]),
                     score_morosidad_ia=random.uniform(50, 99)
                 )
@@ -209,11 +209,11 @@ class Command(BaseCommand):
 
                 c = Cuota.objects.create(
                     residente=res,
-                    monto=random.choice([50000, 75000, 100000]),
+                    monto=random.randrange(500, 2001, 50), # Entre 500 y 2000 Bs, pasos de 50
                     mes=nombre_mes,
                     fecha_vencimiento=fecha_mes.replace(day=5),
                     estado=estado,
-                    descripcion=f"Gastos Comunes {nombre_mes}"
+                    descripcion=f"Gastos Comunes {nombre_mes} (Bs)"
                 )
                 
                 if estado == 'pagada':

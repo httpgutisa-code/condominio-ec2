@@ -3,6 +3,7 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.http import HttpResponse # Importación faltante
 import uuid
 
 # Vista de bienvenida para la raíz de la API
