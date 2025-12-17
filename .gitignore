@@ -1,0 +1,23 @@
+# Security
+*.pem
+condominio.pem
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Database
+db.sqlite3
+db.sqlite3-journal
+
+# VS Code
+.vscode/
+
+# Media (Optional - usually we want to ignore user uploads in dev)
+media/
+!media/.gitkeep
